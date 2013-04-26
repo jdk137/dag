@@ -1,0 +1,27 @@
+{"nodes":[
+{"id": "p0", "name":"总点击量"},
+{"id": "p1", "name":"首页"},
+{"id": "p2", "name":"page2"},
+{"id": "p3", "name":"page3"},
+{"id": "p4", "name":"page4"},
+{"id": "p5", "name":"page5"},
+{"id": "pa", "name":"pagea"},
+{"id": "pc", "name":"pagec"},
+{"id": "pd", "name":"paged"},
+{"id": "pe", "name":"pagee"},
+{"id": "pf", "name":"pagef"},
+{"id": "pb", "name":"pageb"}
+],
+"links":[
+{"source":"p1","target":"p0"},
+{"source":"p2","target":"p0"},
+{"source":"p3","target":"p0"},
+{"source":"p4","target":"p0"},
+{"source":"pc","target":"p0"},
+{"source":"pd","target":"p0"},
+{"source":"p0","target":"pe"},
+{"source":"p0","target":"pf"},
+{"source":"p0","target":"p5"},
+{"source":"p0","target":"pa"},
+{"source":"p0","target":"pb"}
+]}

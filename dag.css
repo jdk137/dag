@@ -1,0 +1,112 @@
+@import url(style.css?20120521);
+
+#chart {
+  height: 500px;
+}
+
+.node rect {
+  /*
+  fill-opacity: .9;
+  shape-rendering: crispEdges;
+  */
+stroke: black;
+stroke-width: 0;
+}
+
+.node.selected rect {
+stroke-width: 2.5;
+stroke: red;
+}
+
+.node text {
+  pointer-events: none;
+  text-shadow: 0 1px 0 #fff;
+}
+
+.link {
+  fill: none;
+  /*
+  fill: #33CCFF;
+  */
+  fill-opacity: .3;
+  stroke: #33CCFF;
+  /*
+  stroke-opacity: .2;
+  */
+  stroke-width: 2.5;
+  stroke-opacity: .6;
+}
+
+.link:hover {
+  fill-opacity: .6;
+}
+
+.fglink {
+  fill: #33CCFF;
+  fill-opacity: .3;
+  stroke: #33CCFF;
+  stroke-opacity: .6;
+}
+
+.fglink:hover {
+  fill-opacity: .6;
+}
+
+.rect {
+    overflow: hidden;
+}
+
+#netFlowHead {
+    position: relative;
+    padding: 5px 0 5px 0;
+    height: 90px;
+}
+#chart {
+  border: solid 1px;
+}
+.levelSummary {
+    background-color: #ddf;
+}
+
+.bgsvg {
+position: absolute;
+left : 0;
+top : 0;
+}
+.selectBox {
+fill: black;
+opacity: 0.2;
+}
+.link.highlight {
+  stroke-width: 10;
+  stroke: black;
+}
+.node-content {
+width: 100%;
+height: 24px;
+}
+.node-icon {
+float: left;
+font-size: 12px;
+background-image: url("./img/success.png");
+width: 28px;
+height: 100%;
+background-position: 50% 50%;
+background-repeat: no-repeat;
+}
+.node-name {
+height: 100%;
+white-space: nowrap;
+overflow: hidden;
+text-overflow: ellipsis;
+padding-right: 10px;
+font-size: 14px;
+padding-left: 5px;
+}
+.node-bar {
+font-size: 12px;
+width: 100%;
+height: 16px;
+padding-left: 5px;
+background-color: rgba(0, 0, 0, 0.2);
+}
