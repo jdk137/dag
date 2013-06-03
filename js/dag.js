@@ -1,4 +1,6 @@
-define(['d3', 'jquery1.7', 'ratioSankey'], function (d3, $, ratioSankey) {
+﻿
+
+/* dag */
 var Dag = function (config) {
   this.config = config;
   //var container = config.containerId || "chart";
@@ -6,19 +8,30 @@ var Dag = function (config) {
   var containerDom = container[0];
   var cover;
   //config
-  var width = config.width || 800, //宽
-      height = config.height || 500; //高
+  var width = container.width() || 1000, //宽
+      height = container.height() || 500; //高
+
+  var zoomCenterStyle = config.zoomCenterStyle || 'imageCenter'; //'mousePoint'; // 'imageCenter';
   
-  var levelSpace = config.levelSpace || 40,
+  var paddingLineSpace = config.paddingLineSpace || 10; //同级间线的上下距离
+  var levelSpace = config.levelSpace || 40,             //节点宽度
       levelPadding = levelSpace,
       levelTotalSpace = levelSpace + levelPadding;
-  var boxSpace = config.boxSpace || 160;
+  var boxSpace = config.boxSpace || 160;                //节点高度
   var margin = {
       left: boxSpace,
       right: boxSpace,
       top: levelPadding,
       bottom: levelPadding
   };
+  var linkCombine = config.linkCombine || false;        //同个节点导出的线是否合并
+  var defaultNodeWidth = boxSpace;
+  var defaultNodeHeight = levelSpace;
+
+  var multiSelect = config.multiSelect || false;        //选择模式下框选功能是否开启
+
+  var selectDragReplacedByMove = config.selectDragReplacedByMove || true; //选择模式下框选是否被移动画布功能替代
+  var clickNodeToHighlightLink = config.clickNodeToHighlightLink || true; //点击节点时是否高亮该节点的所有连线
 
   //canvas size
   var dagH,
@@ -32,11 +45,14 @@ var Dag = function (config) {
       selectBox, //框选svg rect d3对象
       sankey, //sankey布局对象
       highlightLink; //高亮link布局对象
+  var highlightedNodeLinks = []; //高亮的节点线
+  var highlightNodeId = ''; //线高亮的节点的id
   var borderRect;
   
   //interactive related
   var dragMouseStart = {x: 0, y: 0};
   var dragCanvasStart = {x: 0, y: 0};
+  var mouseDragged = false; // if mouse click( not drag), false; if dragged, true
   var handDragging = false;
   var selectDragging = false;
   var mouseOnCanvas = false;
@@ -50,6 +66,7 @@ var Dag = function (config) {
 
   //event handles
   var selectNodeHandle = config.selectNodeHandle || function () {};
+  var doubleClickNodeHandle = config.doubleClickNodeHandle || function () {};
   /*
   function (nodesSelected) {
     console.log(nodesSelected);
@@ -84,8 +101,8 @@ var Dag = function (config) {
     var c = $('<div xmlns="http://www.w3.org/1999/xhtml">' + d.id + '</div>')
       .attr("class", "foreignNode")
       .css({
-          'width': d.width,
-          'height': d.height,
+          'width': d.pos.w,
+          'height': d.pos.h,
           'background-color': "green"
         });
     $(this).append(c);
@@ -95,17 +112,26 @@ var Dag = function (config) {
   var init = function () {
       //init chart;
       container.css({
-          "position": "relative",
+          "position": "relative"
+          /*
           "width": width,
           "height": height
+          */
       });
+      /*
+      container.bind('resize', function(e) {
+          console.log('resize');
+         // all your magic resize mojo goes here
+      });
+      */
+      
       cover = $("<div/>").css({
           "position": "absolute",
           "left": 0,
           "top": 0,
           "z-index": 50,
           "background-color": "rgba(0, 0, 0, 0.001)",
-          "cursor": "url(img/openhand.cur) 4 4, move",
+          "cursor": 'move',//"url(img/openhand.cur) 4 4, move",
           "width": width,
           "height": height
       }).appendTo(container);
@@ -120,6 +146,7 @@ var Dag = function (config) {
       borderRect = svg.append("rect")
           .attr("stroke-width", 1)
           .attr("stroke", "black")
+          .attr("opacity", "0")
           .attr("fill", "white");
       bgsvg = svg.append("g");
           //.attr("transform", "translate(" + margin.left + ", " + margin.top + ")");
@@ -155,6 +182,11 @@ var Dag = function (config) {
       sankey
           .nodes(flowData.nodes)
           .links(flowData.links)
+          .margin(margin)
+          .defaultNodeWidth(defaultNodeWidth)
+          .defaultNodeHeight(defaultNodeHeight)
+          .paddingLineSpace(paddingLineSpace)
+          .linkCombine(linkCombine)
           .layout(40);
   
       flowData.nodes = sankey.nodes();
@@ -163,34 +195,12 @@ var Dag = function (config) {
       var totalLevel = sankey.nodesByLevel().length;
   
       //vertical
+      /*
       dagH = totalLevel * (levelSpace + levelPadding) - levelPadding + margin.top + margin.bottom;
       dagW = boxSpace / sankey.nodeSpace() + margin.left + margin.right;
-  
-      // add canvas position
-      flowData.nodes.forEach(function (d, i) {
-        var pos = d.pos = {
-          level: d.x,
-          r: d.y,
-          dr: d.dy
-        };
-        // vertical
-        pos.x = (dagW - margin.left - margin.right) * pos.r + margin.left;
-        pos.w = (dagW - margin.left - margin.right) * pos.dr;
-        pos.y = levelTotalSpace * pos.level + margin.top;
-        pos.h = levelSpace;
-        pos.x2 = pos.x + pos.w;
-        pos.y2 = pos.y + pos.h;
-      });
-      flowData.links.forEach(function (d, i) {
-        var pos = d.pos = {};
-        // vertical
-        var sp = d.source.pos;
-        var tp = d.target.pos;
-        pos.y0 = sp.y + sp.h;
-        pos.y1 = tp.y;
-        pos.x0 = sp.x + d.sr * (dagW - margin.left - margin.right);
-        pos.x1 = tp.x + d.tr * (dagW - margin.left - margin.right);
-      });
+      */
+      dagW = sankey.width() || width;
+      dagH = sankey.height() || height;  
   };
 
   //link path creator
@@ -200,14 +210,19 @@ var Dag = function (config) {
         x1 = d.pos.x1,
         y0 = d.pos.y0,
         y1 = d.pos.y1;
-    d.linkPath = "M" + x0 + "," + y0
-         + "L" + x0 + "," + (y0 + levelPadding / 2)
-         + "L" + x1 + "," + (y0 + levelPadding / 2) 
-         + "L" + x1 + "," + y1
+    //var ratio = (1 + d.source.levelIndex)  / (d.source.levelEls.length + 1);
+    d.linkPathWithoutArrow = "M" + x0 + "," + y0
+         //+ "L" + x0 + "," + (y0 + levelPadding * ratio)
+         //+ "L" + x1 + "," + (y0 + levelPadding * ratio) 
+         + "L" + x0 + "," + d.pos.turnY
+         + "L" + x1 + "," + d.pos.turnY
+         + "L" + x1 + "," + y1;
+    d.linkPath = d.linkPathWithoutArrow
          + "L" + (x1 - 3) + "," + (y1 - 5)
          + "L" + x1 + "," + (y1 - 3)
          + "L" + (x1 + 3) + "," + (y1 - 5)
          + "L" + x1 + "," + y1;
+    d._elem = this;
     return d.linkPath;
   };
   //draw background svg
@@ -229,8 +244,7 @@ var Dag = function (config) {
       .enter().append("path")
         .attr("class", "link")
         .attr("d", createLinkPath);
-    link.append("title")
-        .text(function(d) { return d.source.name + " → " + d.target.name + "\n" + d.value; });
+    link.append("title");
   
     //node container
     var node = bgsvg.append("g").selectAll(".node")
@@ -240,7 +254,7 @@ var Dag = function (config) {
         .attr("param", function (d) { return d.id; })
         .attr("transform", function(d) { return "translate(" + d.pos.x + "," + d.pos.y + ")"; });
   
-    node.append("foreignObject")
+    var foreignObject = node.append("foreignObject")
         .attr("height", function(d) { return d.pos.h; })
         .attr("width", function (d) { drawNode.call(this, d); return d.pos.w; });
  
@@ -248,16 +262,8 @@ var Dag = function (config) {
         .attr("height", function(d) { return d.pos.h; })
         .attr("width", function (d) { return d.pos.w; })
         .attr("fill", "none");
-    /*
-    //node
-    node.append("rect")
-        .attr("height", function(d) { return d.pos.h; })
-        .attr("width", function (d) { return d.pos.w; })
-        .style("fill", function(d) { return d.color = d.level === 0 ? "white" : "url(#nodeGradient)"; });
-        //.style("stroke", function(d) { return d3.rgb(d.color).darker(2); });
-    node.append("text")
-        .text(function(d) { return d.name; });
-        */
+
+    highlightLink.attr("d", "M0,0L0,0");
   };
   
 
@@ -319,10 +325,15 @@ var Dag = function (config) {
     }
     return count;
   };
+  //放大
   var zoomIn = this.zoomIn = function (config) {
     var zoomRatio = config && config.zoomRatio || 1.2;
     var zoomPointX = config && config.zoomPointX || (vb[2] / 2);
     var zoomPointY = config && config.zoomPointY || (vb[3] / 2);
+    if (zoomCenterStyle === 'imageCenter') {
+      zoomPointX = vb[2] / 2;
+      zoomPointY = vb[3] / 2;
+    }
     var xRatio = zoomPointX / vb[2];
     var yRatio = zoomPointY / vb[3];
     var nvb;
@@ -342,10 +353,15 @@ var Dag = function (config) {
     //svg.attr("viewBox", vb.join(" "));
     resetViewBox();
   };
+  //缩小
   var zoomOut = this.zoomOut = function (config) {
     var zoomRatio = config && config.zoomRatio || 1.2;
     var zoomPointX = config && config.zoomPointX || (vb[2] / 2);
     var zoomPointY = config && config.zoomPointY || (vb[3] / 2);
+    if (zoomCenterStyle === 'imageCenter') {
+      zoomPointX = vb[2] / 2;
+      zoomPointY = vb[3] / 2;
+    }
     var xRatio = zoomPointX / vb[2];
     var yRatio = zoomPointY / vb[3];
     if (vb[2] > dagW && vb[3] > dagH) {
@@ -383,6 +399,7 @@ var Dag = function (config) {
   var resetViewBox = function () {
     svg.attr("viewBox", vb.join(" "));
   };
+  //视窗变动动画。b为viewbox: [x, y, width, height], cb为回调函数。
   var animateViewBox = this.animateViewBox = function (b, cb) {
     var callback = cb || function () {};
     svg.transition()
@@ -390,9 +407,11 @@ var Dag = function (config) {
       .attr("viewBox", b.join(" "))
       .each('end', callback);
   };
+  //最大化视窗
   var maximizeViewBox = this.maximizeViewBox = function (cb) {
     animateViewBox([0, 0, dagW, dagH], cb);
   };
+  //聚焦视窗于某个节点
   var focusViewBoxOnNode = this.focusViewBoxOnNode = function (node, cb) {
     var pos = node.pos;
     vb = [pos.x + pos.w / 2 - width / 2, pos.y + pos.h / 2 - height / 2, width, height];
@@ -500,7 +519,13 @@ var Dag = function (config) {
       handDrag(e);
     }
     if (selectDragging) {
-      selectDrag(e);
+      if (selectDragReplacedByMove) {
+        handDrag(e);
+      } else {
+        if (multiSelect) {
+          selectDrag(e);
+        }
+      }
     }
     nodeHoverHandle(e);
   };
@@ -520,23 +545,37 @@ var Dag = function (config) {
   //bind select drag event
   container.find("svg.canvas").mousedown(function (e) {
     dragMouseStart = getMouseLoc(e);
-    dragCanvasStart = pixelToScale(dragMouseStart);
+    if (selectDragReplacedByMove) {
+      dragCanvasStart = {x: vb[0], y: vb[1]};
+    } else {
+      dragCanvasStart = pixelToScale(dragMouseStart);
+    }
     nodesInView = undefined;
     
     //console.log(dragMouseStart);
     //console.log(dragCanvasStart);
     selectDragging = true;
+    //selectDragging = multiSelect;
     return false; // prevent firefox drag image and chrome select words
   });
   container.find("svg.canvas").mouseup(function (e) {
+    var dragMouseEnd = getMouseLoc(e);
+    if (dragMouseEnd.x === dragMouseStart.x && dragMouseEnd.y === dragMouseStart.y) {
+      mouseDragged = false;
+    } else {
+      mouseDragged = true;
+    }
     selectBox.attr("width", 0).attr("height", 0);
     selectDragging = false;
     selectNodeHandle(nodesSelected);
   });
 
   //click to select nodes
-  container.on("click", ".node", function (e) {
-    var node = $(this);
+  container.on("click", ".foreignNode", function (e) {
+    if (mouseDragged) {
+      return;
+    }
+    var node = $(this).parent().parent();
     var id = node.attr("param");
   
     var addNode = function () {
@@ -590,6 +629,10 @@ var Dag = function (config) {
       }
     }
     selectNodeHandle(nodesSelected);
+     
+    if (clickNodeToHighlightLink) {
+      highlightNodeLinks(node[0].__data__);
+    }
   });
   
   //right click
@@ -643,18 +686,20 @@ var Dag = function (config) {
     }
   }; 
   
-  // link hover
-  /*
-  container.on("mouseover", ".link", function () {
-    var d = this.__data__;
-    if (typeof d !== 'undefined') {
-      highlightLink.attr("d", d.linkPath);
+  // link click
+  container[0].addEventListener('click', function(e) {
+    // do nothing if the target does not have the class drawnLine
+    var d = e.target.__data__;
+    if (typeof e.target.className === 'undefined' || typeof e.target.className.baseVal === 'undefined') {
+      return ;
+    }
+    if (e.target.className.baseVal.indexOf("link") === -1) return;
+    if (e.target.className.baseVal.indexOf("highlight") === -1) {
+      highlightLink.attr("d", d.linkPathWithoutArrow);
+    } else {
+      highlightLink.attr("d", "M0,0L0,0");
     }
   });
-  container.on("mouseout", ".link", function () {
-    highlightLink.attr("d", "M0,0L0,0");
-  });
-  */
   
   //arrow key
   container.on("mouseenter", function () {
@@ -684,24 +729,39 @@ var Dag = function (config) {
       } else if (keyCode === arrow.down) {
         //console.log( "down pressed" );
         vb[1] = vb[1] + vb[3] / 10;
+      } else {
+        return;
       }
       resetViewBox();
       return false;
   });
-  /*
-  */
+
+
 
   //返回节点和链接的结构数据
   this.dump = function () {
     return flowData;
   };
   
+  /* 渲染 */
   var render = this.render = function () {
     processData(flowData);
     //draw
     createSVG(flowData);
+    zoomIn();
+    zoomOut();
   };
 
+  /* 设置缩放中心点，可以mousePoint或者imageCenter */
+  var setZoomCenter = this.setZoomCenter = function (style) {
+    if (style === 'mousePoint') {
+      zoomCenterStyle = 'mousePoint';
+    } else {
+      zoomCenterStyle = 'imageCenter';
+    }
+  };
+
+  /* 清空某节点的子节点的数据(不包括本身)，并重新渲染。 参数为node节点对象 */
   var cleanNodeChildren = this.cleanNodeChildren = function (node) {
     node.removable = true;
     // depth first mark
@@ -738,12 +798,21 @@ var Dag = function (config) {
     render(flowData);
   };
   
+  /* 添加数据 */
   var addData = this.addData = function (newData) {
     flowData.nodes = flowData.nodes.concat(newData.nodes);
     flowData.links = flowData.links.concat(newData.links);
     render(flowData);
   };
 
+  /* 清空数据 */
+  var cleanData = this.cleanData = function () {
+    flowData.nodes = [];
+    flowData.links = [];
+    render(flowData);
+  };
+
+  /* 设置图的状态 move 或者 select, move状态鼠标拖动图片平移。select状态拖动效果可以是平移图片或框选多个节点，可通过multiSelect设定。*/
   var setState = this.setState = function (state) {
     if (state === 'move') {
       selectDragging = false;
@@ -754,9 +823,82 @@ var Dag = function (config) {
     }
   };
 
+  /* 开启关闭多选功能 */
+  var setMultiSelect = this.setMultiSelect = function (b) {
+    if (b === true) {
+      multiSelect = true;
+    } else {
+      multiSelect = false;
+    }
+  };
+
+  /* 高亮某个节点 */
+  var highlightNode = this.highlightNode = function (foreignNode) {
+    var node = $(foreignNode).parent().parent();
+    var id = node.attr("param");
+    node.attr("class", "node selected");
+    nodesSelected[id] = node;
+  };
+
+  /* 不高亮某个节点 */
+  var lowlightNode = this.lowlightNode = function (foreignNode) {
+    var node = $(foreignNode).parent().parent();
+    var id = node.attr("param");
+    node.attr("class", "node");
+    delete nodesSelected[id];
+  };
+
+  /* 高亮某个节点的连线 */
+  var highlightNodeLinks = this.highLightNodeLinks = function (node) {
+    if (node.id === highlightNodeId) {
+      lowlightNodeLinks();
+      return;
+    } else {
+      lowlightNodeLinks();
+      highlightNodeId = node.id;
+    }
+    highlightedNodeLinks = [];
+    node.sourceLinks.concat(node.targetLinks).forEach(function (d) {
+      var elem = d._elem;
+      $(elem).attr("class", "link highlightNodeLink");
+      highlightedNodeLinks.push(elem);
+    });
+  };
+  /* 不高亮某个节点的连线 */
+  var lowlightNodeLinks = this.lowLightNodeLinks = function (node) {
+    highlightNodeId = undefined;
+    highlightedNodeLinks.forEach(function (d) {
+      $(d).attr("class", "link");
+    });
+    highlightedNodeLinks = [];
+  };
+
+  // 输入node ID, 返回node 数据对象
+  var getNodeById = this.getNodeById = function (id) {
+    var i, l;
+    var nodes = flowData.nodes;
+    for (i = 0, l = nodes.length; i < l; i++) {
+      if (nodes[i].id === id) {
+        return nodes[i];
+      }
+    }
+    return undefined;
+  };
+
+  // 调整图片大小
+  var resize = this.resize = function (w, h) {
+    //alert('resize');
+    svg.attr("width", w)
+      .attr("height", h);
+    vb = [vb[0], vb[1], vb[2] * w / width, vb[3] * h / height];
+    resetViewBox();
+    cover.css({"width": w, "height": h});
+    width = w;
+    height = h;
+  };
+
   if (typeof flowData !== 'undefined') {
     render();
   }
 };
-return Dag;
-});
+window.Dag = Dag;

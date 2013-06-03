@@ -2,7 +2,9 @@
 <html><head>
 <meta http-equiv="content-type" content="text/html; charset=UTF-8"><meta charset="utf-8">
 <title>Sankey Diagram</title>
+<!-- dag 样式在dag.css中调整 -->
 <link rel="stylesheet" type="text/css" href="dag.css" />
+<link rel="stylesheet" type="text/css" href="dom.css" />
 </head><body>
 
 <div id="netFlow">
@@ -14,6 +16,11 @@
   <div id="select"> select state </div>
   <div id="chart"> </div>
 </div>
-<script src="js/require.js"  data-main="js/main"></script>
+<script src="js/jquery-1.9.1.js"></script>
+<!--<script src="js/dagAll.js"></script>-->
+<script src="js/d3.js"></script>
+<script src="js/ratioSankey.js"></script>
+<script src="js/dag.js"></script>
+<script src="js/main.js"></script>
 
 </body></html>

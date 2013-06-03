@@ -11,8 +11,8 @@
 {"id": "pe", "name":"pagee"},
 {"id": "pf", "name":"pagef"},
 {"id": "pb", "name":"pageb"},
-{"id": "py", "name":"pageb"},
-{"id": "pz", "name":"pageb"}
+{"id": "py", "name":"pagey"},
+{"id": "pz", "name":"pagez"}
 ],
 "links":[
 {"source":"p1","target":"p0"},
