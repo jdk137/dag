@@ -36,6 +36,15 @@ d3.json("standardExample.json", function(fData) {
     nodeHoverOutHandle: function (node) {
       console.log("hoverOut " + node.id);
     },
+    middleClickHandle: function (node) {
+      console.log("middleClick " + node.id);
+    },
+    nodeClickInHandle: function (node) {
+      console.log("nodeClickIn " + node.id);
+    },
+    nodeClickOutHandle: function (node) {
+      console.log("nodeClickOut " + node.id);
+    },
     /* 鼠标右击某个节点的事件处理函数， e为事件对象， node为数据对象*/
     rightClickHandle: function (e, node) {
       /*

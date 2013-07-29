@@ -870,6 +870,7 @@ var Dag = function (config) {
   var mouseOnCanvas = false;
   var nodesInView = [];
   var nodeHovering;
+  var nodeClicked;
   // selected Node
   var nodesSelected = {};
 
@@ -894,6 +895,24 @@ var Dag = function (config) {
   /*
   function (node) {
     console.log("hoverOut " + node.id);
+  };
+  */
+  var middleClickHandle = config.middleClickHandle || function () {};
+  /*
+  function (node) {
+    console.log("middleClick " + node.id);
+  };
+  */
+  var nodeClickInHandle = config.nodeClickInHandle || function () {};
+  /*
+  function (node) {
+    console.log("nodeClickIn " + node.id);
+  };
+  */
+  var nodeClickOutHandle = config.nodeClickOutHandle || function () {};
+  /*
+  function (node) {
+    console.log("nodeClickOut " + node.id);
   };
   */
   var rightClickHandle = config.rightClickHandle || function () {};
@@ -1441,6 +1460,7 @@ var Dag = function (config) {
       }
     }
     selectNodeHandle(nodesSelected);
+    nodeClickHandle(e);
      
     if (clickNodeToHighlightLink) {
       highlightNodeLinks(node[0].__data__);
@@ -1475,6 +1495,37 @@ var Dag = function (config) {
       }
     };
   }()));
+  
+  //middleClickHandle 中键点击事件
+  container.on('click', function(e) {
+    var node;
+    if (1 === e.button) {
+      e.preventDefault();
+      node = getNodeUnderMouse(e);
+      if (typeof node !== 'undefined') {
+        middleClickHandle(node);
+      }
+    }
+  });
+
+  var nodeClickHandle = function (e) {
+    var node = getNodeUnderMouse(e);
+    if (typeof node !== 'undefined') {
+      if (typeof nodeClicked === 'undefined') {
+        nodeClicked = node;
+        nodeClickInHandle(nodeClicked);
+      } else {
+        nodeClickOutHandle(nodeClicked);
+        nodeClicked = node;
+        nodeClickInHandle(nodeClicked);
+      }
+    } else {
+      if (typeof nodeClicked !== 'undefined') {
+        nodeClickOutHandle(nodeClicked);
+        nodeClicked = undefined;
+      } 
+    }
+  }
   
   //node hover
   var nodeHoverHandle = function (e) {
