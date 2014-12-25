@@ -112,7 +112,7 @@ d3.json("standardExample.json", function(fData) {
 
   dag.setMultiSelect(true); //开启多选
   dag.addData(fData); //添加数据
-  dag.render(); //渲染
+  //dag.render(); //渲染
 
   /*
   var myData = dag.dump(); //返回节点和链接的结构数据
